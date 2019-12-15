@@ -1,24 +1,49 @@
 import React from 'react';
-import logo from './logo.svg';
+import axios from 'axios';
 import './App.css';
 
-const App: React.FC = () => {
+const App = () => {
+  const [data, setData] = React.useState([]);
+
+  const fetchData = async () => {
+    const result = await axios(
+      `http://localhost:8081/machines`,
+    );
+    setData(result.data);
+  };
+
+  const useInterval = (callback: () => void, delay: number) => {
+    const savedCallback = React.useRef<any>(); // TODO: Find appropriate type
+  
+    // Remember the latest callback.
+    React.useEffect(() => {
+      savedCallback.current = callback;
+    }, [callback]);
+  
+    // Set up the interval.
+    React.useEffect(() => {
+      function tick() {
+        savedCallback.current();
+      }
+      if (delay !== null) {
+        let id = setInterval(tick, delay);
+        return () => clearInterval(id);
+      }
+    }, [delay]);
+  }
+  
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  useInterval(() => {
+    // Your custom logic here
+    fetchData();
+  }, 10000);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {JSON.stringify(data)}
     </div>
   );
 }
