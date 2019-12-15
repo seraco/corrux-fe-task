@@ -18,6 +18,8 @@ type Machine = {
 const App = () => {
   const [data, setData] = React.useState([]);
   const [selectedModel, setSelectedModel] = React.useState('all');
+  const [minFuel, setMinFuel] = React.useState(0);
+  const [maxFuel, setMaxFuel] = React.useState(100);
 
   const fetchData = async () => {
     const result = await axios(
@@ -29,6 +31,10 @@ const App = () => {
   const filter = (machine: Machine) => {
     return machine.model.model === selectedModel || selectedModel === 'all'
   }
+
+  const shouldSetFuel = (num: number) => (
+    num <= 100 && num >= 0
+  )
 
   const useInterval = (callback: () => void, delay: number) => {
     const savedCallback = React.useRef<any>(); // TODO: Find appropriate type
@@ -70,6 +76,26 @@ const App = () => {
             model => <option key={model} value={model}>{model}</option>
           )}
         </select>
+      </label>
+      <label>
+        Minimum fuel:
+        <input
+          type="text"
+          value={minFuel}
+          onChange={event => {
+            const numberMinFuel = Number(event.target.value)
+            if (shouldSetFuel(numberMinFuel)) setMinFuel(numberMinFuel)
+          }} />
+      </label>
+      <label>
+        Maximum fuel:
+        <input
+          type="text"
+          value={maxFuel}
+          onChange={event => {
+            const numberMaxFuel = Number(event.target.value)
+            if (shouldSetFuel(numberMaxFuel)) setMaxFuel(numberMaxFuel)
+          }} />
       </label>
       <table style={{ width: '100%' }}>
         <thead>
