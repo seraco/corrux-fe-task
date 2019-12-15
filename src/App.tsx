@@ -13,29 +13,17 @@ type Machine = {
     type: string,
   },
   serial_number: string,
-}
+};
 
 const App = () => {
+  // State of the application
   const [data, setData] = React.useState([]);
   const [selectedModel, setSelectedModel] = React.useState('all');
   const [minFuel, setMinFuel] = React.useState(0);
   const [maxFuel, setMaxFuel] = React.useState(100);
+  const [currentPage, setCurrentPage] = React.useState(1);
 
-  const fetchData = async () => {
-    const result = await axios(
-      `http://localhost:8081/machines`,
-    );
-    setData(result.data);
-  };
-
-  const filter = (machine: Machine) => {
-    return machine.model.model === selectedModel || selectedModel === 'all'
-  }
-
-  const shouldSetFuel = (num: number) => (
-    num <= 100 && num >= 0
-  )
-
+  // Custom hook for using intervals
   const useInterval = (callback: () => void, delay: number) => {
     const savedCallback = React.useRef<any>(); // TODO: Find appropriate type
   
@@ -54,15 +42,49 @@ const App = () => {
         return () => clearInterval(id);
       }
     }, [delay]);
-  }
+  };
   
+  // Hook for fetching data initially
   React.useEffect(() => {
     fetchData();
   }, []);
 
+  // Hook for fetching data every 10 seconds
   useInterval(() => {
     fetchData();
   }, 10000);
+
+
+  const fetchData = async () => {
+    const result = await axios(
+      `http://localhost:8081/machines`,
+    );
+    setData(result.data);
+  };
+
+  // Filter function for returning filtered data
+  const filter = (machine: Machine) => {
+    const isSelectedModel = machine.model.model === selectedModel;
+
+    // Filters
+    const modelFilter = isSelectedModel || selectedModel === 'all';
+    const minFuelFilter = machine.metrics.fuel_remaining >= minFuel;
+    const maxFuelFilter = machine.metrics.fuel_remaining <= maxFuel;
+  
+    return modelFilter && minFuelFilter && maxFuelFilter;
+  };
+
+  const filteredData = data.filter(filter);
+
+  // For controling range of allowed fuel level
+  const shouldSetFuel = (num: number) => (num <= 100 && num >= 0);
+
+  // Variables for handling pagination of the table
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const isValidPage = (page: number) => (page <= totalPages && page >= 1);
+  const firstIndexInPage = (currentPage - 1) * itemsPerPage;
+  const lastIndexInPage = currentPage * itemsPerPage;
 
   return (
     <div className="App">
@@ -83,8 +105,8 @@ const App = () => {
           type="text"
           value={minFuel}
           onChange={event => {
-            const numberMinFuel = Number(event.target.value)
-            if (shouldSetFuel(numberMinFuel)) setMinFuel(numberMinFuel)
+            const numberMinFuel = Number(event.target.value);
+            if (shouldSetFuel(numberMinFuel)) setMinFuel(numberMinFuel);
           }} />
       </label>
       <label>
@@ -93,8 +115,8 @@ const App = () => {
           type="text"
           value={maxFuel}
           onChange={event => {
-            const numberMaxFuel = Number(event.target.value)
-            if (shouldSetFuel(numberMaxFuel)) setMaxFuel(numberMaxFuel)
+            const numberMaxFuel = Number(event.target.value);
+            if (shouldSetFuel(numberMaxFuel)) setMaxFuel(numberMaxFuel);
           }} />
       </label>
       <table style={{ width: '100%' }}>
@@ -108,7 +130,10 @@ const App = () => {
           </tr>
         </thead>
         <tbody>
-          {data.filter(filter).map((el: Machine) => (
+          {filteredData.slice(
+            firstIndexInPage,
+            lastIndexInPage,
+          ).map((el: Machine) => (
             <tr key={el.id}>
               <td>{el.serial_number}</td>
               <td>{el.model.model}</td> 
@@ -119,6 +144,17 @@ const App = () => {
           ))}
         </tbody>
       </table>
+      <label>
+        Page number:
+        <input
+          type="number"
+          value={currentPage}
+          onChange={event => {
+            const page = Number(event.target.value);
+            if (isValidPage(page)) setCurrentPage(page);
+          }} />
+        Total pages: {totalPages}
+      </label>
     </div>
   );
 }
