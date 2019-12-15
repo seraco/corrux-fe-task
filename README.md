@@ -1,8 +1,13 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Front-End Hiring Task
+
+ A Front-End for the corrux Front-End Hiring Task
+
+## Installation
+
+1. Clone the project.
+2. In the project root folder run `npm install`.
 
 ## Available Scripts
-
-In the project directory, you can run:
 
 ### `yarn start`
 
